@@ -1,0 +1,57 @@
+version: '3'
+
+services:
+  kong-database:
+    image: cassandra:3
+    container_name: kong-database
+    volumes:
+      - ./db:/var/lib/cassandra
+    ports:
+      - 9042:9042
+
+  kong-database-migrations:
+    build: ./kong-database-migrations
+    depends_on:
+      - kong-database
+    environment: 
+      - KONG_DATABASE=cassandra
+      - KONG_PG_HOST=kong-database
+      - KONG_CASSANDRA_CONTACT_POINTS=kong-database
+    command: ["./wait-for-it.sh", "kong-database:9042", "-t", "0", "--", "kong", "migrations", "up"]
+
+  kong:
+    build: ./kong
+    container_name: kong
+    depends_on: 
+      - kong-database
+      - kong-database-migrations
+    environment:
+      - KONG_DATABASE=cassandra
+      - KONG_PG_HOST=kong-database
+      - KONG_CASSANDRA_CONTACT_POINTS=kong-database
+      - KONG_PROXY_ACCESS_LOG=/dev/stdout
+      - KONG_ADMIN_ACCESS_LOG=/dev/stdout
+      - KONG_PROXY_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_LISTEN=0.0.0.0:8001
+      - KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444
+    ports:
+      - 8000:8000
+      - 8443:8443
+      - 8001:8001
+      - 8444:8444
+    command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
+  
+  konga:
+    build: ./konga
+    container_name: konga
+    depends_on:
+      - kong
+    ports:
+      - 1337:1337
+    environment:
+      - NODE_ENV=development  #  "production" or "development" | defaults to 'development'
+    command: ["./wait-for-it.sh", "kong:8000", "-t", "0", "--", "npm", "start"]
+  
+    
+    

@@ -1,0 +1,3 @@
+FROM kong:latest
+ADD . /
+
