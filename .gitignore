@@ -1,5 +1,6 @@
 # Database
-db/
+db-kong/
+db-konga/
 
 # Logs
 logs
