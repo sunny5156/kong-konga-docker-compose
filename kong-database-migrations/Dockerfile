@@ -1,3 +1,3 @@
 FROM kong:latest
 ADD . /
-RUN yum install which -y
+#RUN yum install which -y
