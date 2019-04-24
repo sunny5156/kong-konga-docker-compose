@@ -1,3 +1,4 @@
-FROM pantsel/konga
+FROM pantsel/konga:latest
 ADD . /
-# RUN yum install which -y
+#RUN yum install which -y
+#RUN apk add which

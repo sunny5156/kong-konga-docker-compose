@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/bash
 #   Use this script to test if a given TCP host has stopped
 
 cmdname=$(basename $0)

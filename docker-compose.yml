@@ -19,6 +19,7 @@ services:
 
   kong-database-migrations:
     build: ./kong-database-migrations
+    container_name: kong-database-migrations
     depends_on:
       - kong-database
     environment: 
@@ -66,7 +67,7 @@ services:
       #- DB_PASSWORD=your-db-password # Omit if not relevant
       - DB_DATABASE=konga-database # Defaults to 'konga_database'
       - NODE_ENV=development  #  "production" or "development" | defaults to 'development'
-    command: ["./wait-for-migrations-kong-and-start.sh"]
+    #command: ["./wait-for-migrations-kong-and-start.sh"]
   
     
     
