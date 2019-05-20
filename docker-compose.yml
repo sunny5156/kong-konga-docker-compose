@@ -49,7 +49,7 @@ services:
       - 8443:8443
       - 8001:8001
       - 8444:8444
-    command: ["suo sh ./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
+    command: ["sudo sh ./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
    
   konga:
     build: ./konga
