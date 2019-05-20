@@ -26,7 +26,7 @@ services:
       - KONG_DATABASE=cassandra
       - KONG_PG_HOST=kong-database
       - KONG_CASSANDRA_CONTACT_POINTS=kong-database
-    command: ["sudo sh ./wait-for-db-and-migrate.sh"]
+    command: ["./wait-for-db-and-migrate.sh"]
 
   kong:
     build: ./kong
@@ -49,7 +49,7 @@ services:
       - 8443:8443
       - 8001:8001
       - 8444:8444
-    command: ["sudo sh ./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
+    command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
    
   konga:
     build: ./konga
@@ -67,7 +67,7 @@ services:
       #- DB_PASSWORD=your-db-password # Omit if not relevant
       - DB_DATABASE=konga-database # Defaults to 'konga_database'
       - NODE_ENV=development  #  "production" or "development" | defaults to 'development'
-    #command: ["sudo sh ./wait-for-migrations-kong-and-start.sh"]
+    #command: ["./wait-for-migrations-kong-and-start.sh"]
   
     
     
