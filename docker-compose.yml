@@ -50,8 +50,8 @@ services:
       - 8443:8443
       - 8001:8001
       - 8444:8444
-    #command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
-    command: ["kong", "start"]
+    command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
+    #command: ["kong", "start"]
    
   konga:
     build: ./konga
