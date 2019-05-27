@@ -26,8 +26,8 @@ services:
       - KONG_DATABASE=cassandra
       - KONG_PG_HOST=kong-database
       - KONG_CASSANDRA_CONTACT_POINTS=kong-database
-    #command: ["./wait-for-db-and-migrate.sh"]
-    command: ["./wait-for-it.sh", "kong-database:9042", "-t", "0", "--", "kong", "migrations", "bootstrap"]
+    command: ["./wait-for-db-and-migrate.sh"]
+    #command: ["./wait-for-it.sh", "kong-database:9042", "-t", "0", "--", "kong", "migrations", "bootstrap"]
 
   kong:
     build: ./kong
