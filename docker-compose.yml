@@ -33,7 +33,6 @@ services:
     networks:
        - kong-konga-network
     command: ["./wait-for-db-and-migrate.sh"]
-    #command: ["./wait-for-it.sh", "kong-database:9042", "-t", "0", "--", "kong", "migrations", "bootstrap"]
 
   kong:
     build: ./kong
@@ -59,7 +58,6 @@ services:
     networks:
        - kong-konga-network
     command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
-    #command: ["kong", "start"]
    
   konga:
     build: ./konga
@@ -76,11 +74,10 @@ services:
       #- DB_USER=your-db-user # Omit if not relevant
       #- DB_PASSWORD=your-db-password # Omit if not relevant
       - DB_DATABASE=konga-database # Defaults to 'konga_database'
-      - NODE_ENV=development  #  "production" or "development" | defaults to 'development'
+      - NODE_ENV=production  #  "production" or "development" | defaults to 'development'
     networks:
        - kong-konga-network
-    #command: ["./wait-for-migrations-kong-and-start.sh"]
-    #command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong-dashboard", "start", "--kong-url", "http://kong:8001"]
+    #command: ["./wait-for-migrations-kong-and-start.sh"] #关闭@sunny5156
     
 networks:
    kong-konga-network:
