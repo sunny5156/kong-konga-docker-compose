@@ -68,7 +68,7 @@ services:
       #- DB_USER=your-db-user # Omit if not relevant
       #- DB_PASSWORD=your-db-password # Omit if not relevant
       - DB_DATABASE=konga-database # Defaults to 'konga_database'
-      - NODE_ENV=production  #  "production" or "development" | defaults to 'development'
+      - NODE_ENV=development  #  "production" or "development" | defaults to 'development'
     command: ["./wait-for-migrations-kong-and-start.sh"]
     #command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong-dashboard", "start", "--kong-url", "http://kong:8001"]
   
