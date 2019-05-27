@@ -79,12 +79,9 @@ services:
       - NODE_ENV=development  #  "production" or "development" | defaults to 'development'
     networks:
        - kong-konga-network
-    command: ["./wait-for-migrations-kong-and-start.sh"]
+    #command: ["./wait-for-migrations-kong-and-start.sh"]
     #command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong-dashboard", "start", "--kong-url", "http://kong:8001"]
     
-    networks:
-     kong-konga-network:
-       driver: bridge0
-  
-    
-    
+networks:
+   kong-konga-network:
+      driver: bridge
