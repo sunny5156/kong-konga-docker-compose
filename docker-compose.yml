@@ -48,8 +48,8 @@ services:
       - KONG_ADMIN_ACCESS_LOG=/dev/stdout
       - KONG_PROXY_ERROR_LOG=/dev/stderr
       - KONG_ADMIN_ERROR_LOG=/dev/stderr
-      - KONG_ADMIN_LISTEN=192.168.0.92:8001
-      - KONG_ADMIN_LISTEN_SSL=192.168.0.92:8444
+      - KONG_ADMIN_LISTEN=10.169.246.231:8001
+      - KONG_ADMIN_LISTEN_SSL=10.169.246.231:8444
     ports:
       - 8000:8000
       - 8443:8443
