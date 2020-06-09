@@ -5,7 +5,7 @@ services:
     build: ./konga-database
     container_name: konga-database
     ports:
-      - 27017:27017
+      - 192.168.0.92:27017:27017
     volumes:
       - ./db-konga:/data/db
     networks:
@@ -17,7 +17,7 @@ services:
     volumes:
       - ./db-kong:/var/lib/cassandra
     ports:
-      - 9042:9042
+      - 192.168.0.92:9042:9042
     networks:
        - kong-konga-network
 
