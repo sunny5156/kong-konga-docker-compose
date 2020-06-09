@@ -4,8 +4,8 @@ services:
   konga-database:
     build: ./konga-database
     container_name: konga-database
-    #ports:
-    #  - 192.168.0.92:27017:27017
+    ports:
+      - 192.168.0.92:27017:27017
     volumes:
       - ./db-konga:/data/db
     networks:
