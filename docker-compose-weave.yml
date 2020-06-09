@@ -1,0 +1,101 @@
+version: '3'
+
+services:
+  konga-database:
+    build: ./konga-database
+    container_name: konga-database
+    ports:
+      - 192.168.0.92:27017:27017
+    volumes:
+      - ./db-konga:/data/db
+    networks:
+       - kong-konga-network
+    network_mode: "bridge"
+    environment:
+      WEAVE_CIDR: 192.168.2.103/22
+
+  kong-database:
+    build: ./kong-database
+    container_name: kong-database
+    volumes:
+      - ./db-kong:/var/lib/cassandra
+    ports:
+      - 192.168.0.92:9042:9042
+    networks:
+       - kong-konga-network
+    network_mode: "bridge"
+    environment:
+      WEAVE_CIDR: 192.168.2.104/22
+
+  kong-database-migrations:
+    build: ./kong-database-migrations
+    container_name: kong-database-migrations
+    depends_on:
+      - kong-database
+    environment: 
+      - KONG_DATABASE=cassandra
+      - KONG_PG_HOST=kong-database
+      - KONG_CASSANDRA_CONTACT_POINTS=kong-database
+    networks:
+       - kong-konga-network
+    network_mode: "bridge"
+    environment:
+      WEAVE_CIDR: 192.168.2.105/22
+    command: ["./wait-for-db-and-migrate.sh"]
+
+  kong:
+    build: ./kong
+    container_name: kong
+    depends_on: 
+      - kong-database
+      - kong-database-migrations
+    environment:
+      - KONG_DATABASE=cassandra
+      - KONG_PG_HOST=kong-database
+      - KONG_CASSANDRA_CONTACT_POINTS=kong-database
+      - KONG_PROXY_ACCESS_LOG=/dev/stdout
+      - KONG_ADMIN_ACCESS_LOG=/dev/stdout
+      - KONG_PROXY_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_LISTEN=0.0.0.0:8001
+      - KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444
+    ports:
+      - 8000:8000
+      - 8443:8443
+      - 192.168.0.92:8001:8001
+      - 192.168.0.92:8444:8444
+    networks:
+       - kong-konga-network
+    network_mode: "bridge"
+    environment:
+      WEAVE_CIDR: 192.168.0.8/22
+    command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
+   
+  konga:
+    build: ./konga
+    container_name: konga
+    depends_on:
+      - konga-database
+      - kong
+    ports:
+      - 1337:1337
+    environment:
+      - DB_ADAPTER=mongo # 'mongo','postgres','sqlserver'  or 'mysql'
+      - DB_HOST=konga-database
+      - DB_PORT=27017 # Defaults to the default db port
+      #- DB_USER=your-db-user # Omit if not relevant
+      #- DB_PASSWORD=your-db-password # Omit if not relevant
+      - DB_DATABASE=konga-database # Defaults to 'konga_database'
+      - NODE_ENV=production  #  "production" or "development" | defaults to 'development'
+    networks:
+       - kong-konga-network
+    network_mode: "bridge"
+    environment:
+      WEAVE_CIDR: 192.168.2.106/22
+    #command: ["./wait-for-migrations-kong-and-start.sh"] #关闭@sunny5156
+    
+networks:
+   kong-konga-network:
+      # driver: bridge
+      external:
+        name: weave
