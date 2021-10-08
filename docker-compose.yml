@@ -5,7 +5,7 @@ services:
     build: ./konga-database
     container_name: konga-database
     ports:
-      - 192.168.0.92:27017:27017
+      - 27017:27017
     volumes:
       - ./db-konga:/data/db
     networks:
@@ -17,7 +17,7 @@ services:
     volumes:
       - ./db-kong:/var/lib/cassandra
     ports:
-      - 192.168.0.92:9042:9042
+      - 9042:9042
     networks:
        - kong-konga-network
 
@@ -53,8 +53,8 @@ services:
     ports:
       - 8000:8000
       - 8443:8443
-      - 192.168.0.92:8001:8001
-      - 192.168.0.92:8444:8444
+      - 8001:8001
+      - 8444:8444
     networks:
        - kong-konga-network
     command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]

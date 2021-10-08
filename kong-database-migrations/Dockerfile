@@ -1,4 +1,4 @@
-FROM kong:2.5.1-centos
+FROM kong:2.6.0-centos
 ADD . /
 #RUN yum install which -y
 RUN cp /etc/kong/kong.conf.default /etc/kong/kong.conf && \
