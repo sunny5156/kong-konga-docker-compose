@@ -9,7 +9,8 @@ services:
     volumes:
       - ./db-konga:/data/db
     networks:
-       - kong-konga-network
+       kong-konga-network:
+         ipv4_address: 172.23.0.10
 
   kong-database:
     build: ./kong-database
@@ -19,7 +20,8 @@ services:
     ports:
       - 9042:9042
     networks:
-       - kong-konga-network
+       kong-konga-network:
+         ipv4_address: 172.23.0.15
 
   kong-database-migrations:
     build: ./kong-database-migrations
@@ -31,7 +33,8 @@ services:
       - KONG_PG_HOST=kong-database
       - KONG_CASSANDRA_CONTACT_POINTS=kong-database
     networks:
-       - kong-konga-network
+       kong-konga-network:
+         ipv4_address: 172.23.0.8
     command: ["./wait-for-db-and-migrate.sh"]
 
   kong:
@@ -51,12 +54,13 @@ services:
       - KONG_ADMIN_LISTEN=0.0.0.0:8001
       - KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444
     ports:
-      - 8000:8000
+      - 8800:8000
       - 8443:8443
-      - 8001:8001
+      - 8801:8001
       - 8444:8444
     networks:
-       - kong-konga-network
+       kong-konga-network:
+         ipv4_address: 172.23.0.2
     command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
    
   konga:
@@ -76,9 +80,14 @@ services:
       - DB_DATABASE=konga-database # Defaults to 'konga_database'
       - NODE_ENV=production  #  "production" or "development" | defaults to 'development'
     networks:
-       - kong-konga-network
+       kong-konga-network:
+         ipv4_address: 172.23.0.3
     #command: ["./wait-for-migrations-kong-and-start.sh"] #关闭@sunny5156
     
 networks:
    kong-konga-network:
-      driver: bridge
+      #driver: bridge
+      ipam:
+        config:
+          - subnet: 172.23.0.0/16
+            gateway: 172.23.0.1
