@@ -9,7 +9,8 @@ services:
     volumes:
       - ./db-konga:/data/db
     networks:
-       - kong-konga-network
+       kong-konga-network:
+         ipv4_address: 192.168.99.3
 
   kong-database:
     build: ./kong-database
@@ -19,7 +20,8 @@ services:
     ports:
       - 9042:9042
     networks:
-       - kong-konga-network
+       kong-konga-network:
+         ipv4_address: 192.168.99.4
 
   kong-database-migrations:
     build: ./kong-database-migrations
@@ -28,10 +30,12 @@ services:
       - kong-database
     environment: 
       - KONG_DATABASE=cassandra
-      - KONG_PG_HOST=kong-database
-      - KONG_CASSANDRA_CONTACT_POINTS=kong-database
+      #- KONG_PG_HOST=kong-database
+      - KONG_PG_HOST=192.168.99.4
+      - KONG_CASSANDRA_CONTACT_POINTS=192.168.99.4
     networks:
-       - kong-konga-network
+       kong-konga-network:
+         ipv4_address: 192.168.99.5
     command: ["./wait-for-db-and-migrate.sh"]
 
   kong:
@@ -42,8 +46,8 @@ services:
       - kong-database-migrations
     environment:
       - KONG_DATABASE=cassandra
-      - KONG_PG_HOST=kong-database
-      - KONG_CASSANDRA_CONTACT_POINTS=kong-database
+      - KONG_PG_HOST=192.168.99.4
+      - KONG_CASSANDRA_CONTACT_POINTS=192.168.99.4
       - KONG_PROXY_ACCESS_LOG=/dev/stdout
       - KONG_ADMIN_ACCESS_LOG=/dev/stdout
       - KONG_PROXY_ERROR_LOG=/dev/stderr
@@ -55,8 +59,11 @@ services:
       - 8443:8443
       - 8001:8001
       - 8444:8444
+    volumes:
+      - ./kong-config:/etc/kong
     networks:
-       - kong-konga-network
+       kong-konga-network:
+         ipv4_address: 192.168.99.6
     command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
    
   konga:
@@ -69,16 +76,25 @@ services:
       - 1337:1337
     environment:
       - DB_ADAPTER=mongo # 'mongo','postgres','sqlserver'  or 'mysql'
-      - DB_HOST=konga-database
+      #- DB_HOST=konga-database
+      - DB_HOST=192.168.99.3
       - DB_PORT=27017 # Defaults to the default db port
       #- DB_USER=your-db-user # Omit if not relevant
       #- DB_PASSWORD=your-db-password # Omit if not relevant
       - DB_DATABASE=konga-database # Defaults to 'konga_database'
       - NODE_ENV=production  #  "production" or "development" | defaults to 'development'
     networks:
-       - kong-konga-network
+       kong-konga-network:
+         ipv4_address: 192.168.99.7
     #command: ["./wait-for-migrations-kong-and-start.sh"] #关闭@sunny5156
     
+#networks:
+#   kong-konga-network:
+#      driver: bridge
+
 networks:
    kong-konga-network:
-      driver: bridge
+      ipam: 
+        driver: default
+        config:
+          - subnet: "192.168.99.0/24"
