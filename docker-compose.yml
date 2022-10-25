@@ -23,6 +23,7 @@ services:
        kong-konga-network:
          ipv4_address: 192.168.99.4
 
+
   kong-database-migrations:
     build: ./kong-database-migrations
     container_name: kong-database-migrations
@@ -30,12 +31,12 @@ services:
       - kong-database
     environment: 
       - KONG_DATABASE=cassandra
-      #- KONG_PG_HOST=kong-database
       - KONG_PG_HOST=192.168.99.4
       - KONG_CASSANDRA_CONTACT_POINTS=192.168.99.4
     networks:
        kong-konga-network:
          ipv4_address: 192.168.99.5
+
     command: ["./wait-for-db-and-migrate.sh"]
 
   kong:
@@ -55,15 +56,16 @@ services:
       - KONG_ADMIN_LISTEN=0.0.0.0:8001
       - KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444
     ports:
-      - 8000:8000
+      - 8800:8000
       - 8443:8443
-      - 8001:8001
+      - 8801:8001
       - 8444:8444
     volumes:
       - ./kong-config:/etc/kong
     networks:
        kong-konga-network:
          ipv4_address: 192.168.99.6
+
     command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
    
   konga:
@@ -76,7 +78,6 @@ services:
       - 1337:1337
     environment:
       - DB_ADAPTER=mongo # 'mongo','postgres','sqlserver'  or 'mysql'
-      #- DB_HOST=konga-database
       - DB_HOST=192.168.99.3
       - DB_PORT=27017 # Defaults to the default db port
       #- DB_USER=your-db-user # Omit if not relevant
@@ -86,11 +87,8 @@ services:
     networks:
        kong-konga-network:
          ipv4_address: 192.168.99.7
+
     #command: ["./wait-for-migrations-kong-and-start.sh"] #关闭@sunny5156
-    
-#networks:
-#   kong-konga-network:
-#      driver: bridge
 
 networks:
    kong-konga-network:
@@ -98,3 +96,5 @@ networks:
         driver: default
         config:
           - subnet: "192.168.99.0/24"
+
+
