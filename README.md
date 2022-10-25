@@ -6,3 +6,14 @@ The script has been made to perform the correct start up sequence. It doensn't u
 
 Used the wonderful wait-for-it.sh script (https://github.com/vishnubob/wait-for-it) to wait for Cassandra datbase to start. I used it as a template for the wait-for-stop.sh script.
 
+# Version Description 
+
+```
+
+kong: 2.7.1
+cassandra: 3.2
+konga: 0.14.9
+mongo: 4.0
+
+```
+
