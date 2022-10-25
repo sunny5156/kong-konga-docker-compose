@@ -56,9 +56,9 @@ services:
       - KONG_ADMIN_LISTEN=0.0.0.0:8001
       - KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444
     ports:
-      - 8800:8000
+      - 8000:8000
       - 8443:8443
-      - 8801:8001
+      - 8001:8001
       - 8444:8444
     volumes:
       - ./kong-config:/etc/kong
