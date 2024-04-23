@@ -1,4 +1,4 @@
-version: '3'
+version: '3.1'
 
 services:
   konga-database:
@@ -6,22 +6,32 @@ services:
     container_name: konga-database
     ports:
       - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=ognom
     volumes:
-      - ./db-konga:/data/db
+     - ./db-konga:/data/db
     networks:
        kong-konga-network:
          ipv4_address: 192.168.99.3
 
   kong-database:
-    build: ./kong-database
+    build: ./kong-database-postgres
     container_name: kong-database
+    restart: always
     volumes:
-      - ./db-kong:/var/lib/cassandra
+     - ./db-kong:/var/lib/postgresql/data
+    privileged: true
     ports:
-      - 9042:9042
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=kong 
+      - POSTGRES_DB=kong 
+      - POSTGRES_PASSWORD=gonk
     networks:
        kong-konga-network:
          ipv4_address: 192.168.99.4
+    # command: ['ls -l /usr/local/bin/docker-entrypoint.sh']
 
 
   kong-database-migrations:
@@ -30,8 +40,10 @@ services:
     depends_on:
       - kong-database
     environment: 
-      - KONG_DATABASE=cassandra
+      - KONG_DATABASE=postgres
       - KONG_PG_HOST=192.168.99.4
+      - KONG_PG_USER=kong
+      - KONG_PG_PASSWORD=gonk
       - KONG_CASSANDRA_CONTACT_POINTS=192.168.99.4
     networks:
        kong-konga-network:
@@ -46,8 +58,9 @@ services:
       - kong-database
       - kong-database-migrations
     environment:
-      - KONG_DATABASE=cassandra
+      - KONG_DATABASE=postgres
       - KONG_PG_HOST=192.168.99.4
+      - KONG_PG_PASSWORD=gonk
       - KONG_CASSANDRA_CONTACT_POINTS=192.168.99.4
       - KONG_PROXY_ACCESS_LOG=/dev/stdout
       - KONG_ADMIN_ACCESS_LOG=/dev/stdout
@@ -78,10 +91,10 @@ services:
       - 1337:1337
     environment:
       - DB_ADAPTER=mongo # 'mongo','postgres','sqlserver'  or 'mysql'
-      - DB_HOST=192.168.99.3
+      - DB_HOST=konga-database
       - DB_PORT=27017 # Defaults to the default db port
-      #- DB_USER=your-db-user # Omit if not relevant
-      #- DB_PASSWORD=your-db-password # Omit if not relevant
+      - DB_USER=admin # Omit if not relevant
+      - DB_PASSWORD=ognom # Omit if not relevant
       - DB_DATABASE=konga-database # Defaults to 'konga_database'
       - NODE_ENV=production  #  "production" or "development" | defaults to 'development'
     networks:
