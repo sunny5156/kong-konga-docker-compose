@@ -1,4 +1,4 @@
-FROM sunny5156/konga:0.0.1
+FROM sunny5156/konga:0.0.2
 USER root
 ADD . /
 RUN chmod 777 /*.sh

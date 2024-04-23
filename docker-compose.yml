@@ -11,6 +11,11 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=ognom
     volumes:
      - ./db-konga:/data/db
+    healthcheck:
+      test: echo 'db.stats().ok' | mongo localhost:27017/konga --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
        kong-konga-network:
          ipv4_address: 192.168.99.3
@@ -87,6 +92,8 @@ services:
     depends_on:
       - konga-database
       - kong
+    volumes:
+      - ./konga-config/user_seed.js:/app/user_seed.js:ro
     ports:
       - 1337:1337
     environment:
@@ -97,6 +104,7 @@ services:
       - DB_PASSWORD=ognom # Omit if not relevant
       - DB_DATABASE=konga-database # Defaults to 'konga_database'
       - NODE_ENV=production  #  "production" or "development" | defaults to 'development'
+      - KONGA_SEED_USER_DATA_SOURCE_FILE=/app/user_seed.js
     networks:
        kong-konga-network:
          ipv4_address: 192.168.99.7
