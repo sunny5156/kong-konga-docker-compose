@@ -85,7 +85,7 @@ services:
     build: ./konga
     container_name: konga
     depends_on:
-      - konga-database
+      - kong-database
       - kong
     ports:
       - 1337:1337
