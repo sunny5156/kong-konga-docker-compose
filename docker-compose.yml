@@ -7,9 +7,9 @@ services:
     restart: always
     ports:
       - 27017:27017
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=ognom
+    # environment:
+    #   - MONGO_INITDB_ROOT_USERNAME=admin
+    #   - MONGO_INITDB_ROOT_PASSWORD=ognom
     volumes:
      - ./db-konga:/data/db
     healthcheck:
@@ -102,8 +102,8 @@ services:
       - DB_ADAPTER=mongo # 'mongo','postgres','sqlserver'  or 'mysql'
       - DB_HOST=10.100.0.239
       - DB_PORT=27017 # Defaults to the default db port
-      - DB_USER=admin # Omit if not relevant
-      - DB_PASSWORD=ognom # Omit if not relevant
+      # - DB_USER=admin # Omit if not relevant
+      # - DB_PASSWORD=ognom # Omit if not relevant
       - DB_DATABASE=konga-database # Defaults to 'konga_database'
       - NODE_ENV=production  #  "production" or "development" | defaults to 'development'
       - KONGA_SEED_USER_DATA_SOURCE_FILE=/app/user_seed.js
