@@ -100,7 +100,7 @@ services:
       - 1337:1337
     environment:
       - DB_ADAPTER=mongo # 'mongo','postgres','sqlserver'  or 'mysql'
-      - DB_HOST=kong-database
+      - DB_HOST=konga-database
       - DB_PORT=27017 # Defaults to the default db port
       # - DB_USER=admin # Omit if not relevant
       # - DB_PASSWORD=ognom # Omit if not relevant
