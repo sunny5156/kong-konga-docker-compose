@@ -1,6 +1,19 @@
 version: '3.1'
 
 services:
+  consul:
+    image: consul:1.14.8
+    container_name: consul
+    restart: always
+    ports:
+      - "8400:8400"
+      - "8500:8500"
+      - "8600:53/udp"
+      - "192.168.99.2:53:53/udp"
+    networks:
+       kong-konga-network:
+         ipv4_address: 192.168.99.2
+
   konga-database:
     build: ./konga-database
     container_name: konga-database
@@ -75,6 +88,7 @@ services:
       - KONG_ADMIN_ERROR_LOG=/dev/stderr
       - KONG_ADMIN_LISTEN=0.0.0.0:8001
       - KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444
+      - KONG_DNS_RESOLVER=192.168.99.2:8600   #注意按需使用，consul的才配
     ports:
       - 8000:8000
       - 8443:8443
