@@ -1,21 +1,21 @@
 version: '3.1'
 
 services:
-  consul:
-    image: consul:1.14.8
-    container_name: consul
-    restart: always
-    ports:
-      - 8400:8400
-      - 8500:8500
-      - 8600:53/udp
-      - 53:53/udp
-    command: 'agent -datacenter docker -server -bootstrap-expect 1 -disable-host-node-id -client 0.0.0.0 -ui -data-dir /consul/data'
-    volumes:
-      - ./consul-data:/data
-    networks:
-       kong-konga-network:
-         ipv4_address: 192.168.99.2
+  # consul:
+  #   image: consul:1.14.8
+  #   container_name: consul
+  #   restart: always
+  #   ports:
+  #     - 8400:8400
+  #     - 8500:8500
+  #     - 8600:53/udp
+  #     - 53:53/udp
+  #   command: 'agent -datacenter docker -server -bootstrap-expect 1 -disable-host-node-id -client 0.0.0.0 -ui -data-dir /consul/data'
+  #   volumes:
+  #     - ./consul-data:/data
+  #   networks:
+  #      kong-konga-network:
+  #        ipv4_address: 192.168.99.2
 
   konga-database:
     build: ./konga-database
