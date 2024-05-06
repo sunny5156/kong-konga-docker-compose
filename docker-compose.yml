@@ -80,7 +80,7 @@ services:
     depends_on: 
       - kong-database
       - kong-database-migrations
-      - consul
+      # - consul
     environment:
       - KONG_DATABASE=postgres
       - KONG_PG_HOST=192.168.99.4
