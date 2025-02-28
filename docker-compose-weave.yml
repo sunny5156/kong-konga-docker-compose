@@ -1,74 +1,105 @@
-version: '3'
+version: '3.1'
 
 services:
+  # consul:
+  #   image: consul:1.14.8
+  #   container_name: consul
+  #   restart: always
+  #   ports:
+  #     - 8400:8400
+  #     - 8500:8500
+  #     - 8600:53/udp
+  #     - 53:53/udp
+  #   command: 'agent -datacenter docker -server -bootstrap-expect 1 -disable-host-node-id -client 0.0.0.0 -ui -data-dir /consul/data'
+  #   volumes:
+  #     - ./consul-data:/data
+  #   networks:
+  #      kong-konga-network:
+  #        ipv4_address: 192.168.99.2
+
   konga-database:
     build: ./konga-database
     container_name: konga-database
+    restart: always
     ports:
       - 192.168.0.92:27017:27017
+    # environment:
+    #   - MONGO_INITDB_ROOT_USERNAME=admin
+    #   - MONGO_INITDB_ROOT_PASSWORD=ognom
     volumes:
-      - ./db-konga:/data/db
-    networks:
-       - kong-konga-network
+     - ./db-konga:/data/db
+    # healthcheck:
+    #   test: echo 'db.stats().ok' | mongo localhost:27017/konga --quiet
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
     network_mode: "bridge"
     environment:
-      WEAVE_CIDR: 192.168.2.103/22
+      - WEAVE_CIDR="192.168.2.103/22"
 
   kong-database:
-    build: ./kong-database
+    build: ./kong-database-postgres
     container_name: kong-database
+    restart: always
     volumes:
-      - ./db-kong:/var/lib/cassandra
+     - ./db-kong:/var/lib/postgresql/data
+    privileged: true
     ports:
-      - 192.168.0.92:9042:9042
-    networks:
-       - kong-konga-network
+      - 192.168.0.92:5432:5432
     network_mode: "bridge"
     environment:
-      WEAVE_CIDR: 192.168.2.104/22
+      - POSTGRES_USER=kong 
+      - POSTGRES_DB=kong 
+      - POSTGRES_PASSWORD=gonk
+      - WEAVE_CIDR="192.168.2.104/22"
+    # command: ['ls -l /usr/local/bin/docker-entrypoint.sh']
+
 
   kong-database-migrations:
     build: ./kong-database-migrations
     container_name: kong-database-migrations
     depends_on:
       - kong-database
-    environment: 
-      - KONG_DATABASE=cassandra
-      - KONG_PG_HOST=kong-database
-      - KONG_CASSANDRA_CONTACT_POINTS=kong-database
-    networks:
-       - kong-konga-network
     network_mode: "bridge"
     environment:
-      WEAVE_CIDR: 192.168.2.105/22
+      - KONG_DATABASE=postgres
+      - KONG_PG_HOST=kong-database
+      - KONG_PG_USER=kong
+      - KONG_PG_PASSWORD=gonk
+      - KONG_CASSANDRA_CONTACT_POINTS=kong-database
+      - WEAVE_CIDR="192.168.2.105/22"
     command: ["./wait-for-db-and-migrate.sh"]
 
   kong:
     build: ./kong
     container_name: kong
+    restart: on-failure
     depends_on: 
       - kong-database
       - kong-database-migrations
+      # - consul
+    ports:
+      - 8000:8000
+      - 8443:8443
+      - 192.168.0.92:8001:8001
+      - 192.168.0.92:8444:8444
+    volumes:
+      - ./kong-config:/etc/kong
+    network_mode: "bridge"
     environment:
-      - KONG_DATABASE=cassandra
-      - KONG_PG_HOST=kong-database
-      - KONG_CASSANDRA_CONTACT_POINTS=kong-database
+      - KONG_DATABASE=postgres
+      - KONG_PG_HOST=192.168.99.4
+      - KONG_PG_PASSWORD=gonk
+      - KONG_CASSANDRA_CONTACT_POINTS=192.168.99.4
       - KONG_PROXY_ACCESS_LOG=/dev/stdout
       - KONG_ADMIN_ACCESS_LOG=/dev/stdout
       - KONG_PROXY_ERROR_LOG=/dev/stderr
       - KONG_ADMIN_ERROR_LOG=/dev/stderr
       - KONG_ADMIN_LISTEN=0.0.0.0:8001
       - KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444
-    ports:
-      - 8000:8000
-      - 8443:8443
-      - 192.168.0.92:8001:8001
-      - 192.168.0.92:8444:8444
-    networks:
-       - kong-konga-network
-    network_mode: "bridge"
-    environment:
-      WEAVE_CIDR: 192.168.0.8/22
+      # - KONG_DNS_RESOLVER=192.168.99.2:8600   #注意按需使用，consul的才配
+      - WEAVE_CIDR="192.168.0.8/22"
+
     command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
    
   konga:
@@ -77,25 +108,30 @@ services:
     depends_on:
       - konga-database
       - kong
+    volumes:
+      - ./konga-config/user_seed.js:/app/user_seed.js:ro
     ports:
       - 1337:1337
+    environment:
+      
+    network_mode: "bridge"
     environment:
       - DB_ADAPTER=mongo # 'mongo','postgres','sqlserver'  or 'mysql'
       - DB_HOST=konga-database
       - DB_PORT=27017 # Defaults to the default db port
-      #- DB_USER=your-db-user # Omit if not relevant
-      #- DB_PASSWORD=your-db-password # Omit if not relevant
+      # - DB_USER=admin # Omit if not relevant
+      # - DB_PASSWORD=ognom # Omit if not relevant
       - DB_DATABASE=konga-database # Defaults to 'konga_database'
       - NODE_ENV=production  #  "production" or "development" | defaults to 'development'
-    networks:
-       - kong-konga-network
-    network_mode: "bridge"
-    environment:
-      WEAVE_CIDR: 192.168.2.106/22
+      - KONGA_SEED_USER_DATA_SOURCE_FILE=/app/user_seed.js
+      - WEAVE_CIDR="192.168.2.106/22"
+
     #command: ["./wait-for-migrations-kong-and-start.sh"] #关闭@sunny5156
-    
+
 networks:
    kong-konga-network:
       # driver: bridge
       external:
         name: weave
+
+
