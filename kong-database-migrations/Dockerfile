@@ -1,4 +1,4 @@
-FROM kong/kong-gateway:3.5-rhel
+FROM kong/kong-gateway:3.9-rhel
 ADD . /
 #RUN yum install which -y
 RUN cp /etc/kong/kong.conf.default /etc/kong/kong.conf && \

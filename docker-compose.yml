@@ -1,4 +1,4 @@
-version: '3.1'
+version: '3.8'
 
 services:
   # consul:
@@ -21,6 +21,7 @@ services:
     build: ./konga-database
     container_name: konga-database
     restart: always
+    user: root
     ports:
       - 27017:27017
     # environment:
@@ -35,12 +36,13 @@ services:
     #   retries: 5
     networks:
        kong-konga-network:
-         ipv4_address: 192.168.99.3
+          ipv4_address: 192.168.99.3
 
   kong-database:
     build: ./kong-database-postgres
     container_name: kong-database
     restart: always
+    user: root
     volumes:
      - ./db-kong:/var/lib/postgresql/data
     privileged: true
@@ -52,24 +54,25 @@ services:
       - POSTGRES_PASSWORD=gonk
     networks:
        kong-konga-network:
-         ipv4_address: 192.168.99.4
+          ipv4_address: 192.168.99.4
     # command: ['ls -l /usr/local/bin/docker-entrypoint.sh']
 
 
   kong-database-migrations:
     build: ./kong-database-migrations
     container_name: kong-database-migrations
+    user: root
     depends_on:
       - kong-database
     environment: 
       - KONG_DATABASE=postgres
-      - KONG_PG_HOST=192.168.99.4
+      - KONG_PG_HOST=kong-database  #192.168.99.4
       - KONG_PG_USER=kong
       - KONG_PG_PASSWORD=gonk
-      - KONG_CASSANDRA_CONTACT_POINTS=192.168.99.4
+      - KONG_CASSANDRA_CONTACT_POINTS=kong-database #192.168.99.4
     networks:
        kong-konga-network:
-         ipv4_address: 192.168.99.5
+          ipv4_address: 192.168.99.5
 
     command: ["./wait-for-db-and-migrate.sh"]
 
@@ -77,22 +80,23 @@ services:
     build: ./kong
     container_name: kong
     restart: on-failure
+    user: root
     depends_on: 
       - kong-database
       - kong-database-migrations
       # - consul
     environment:
       - KONG_DATABASE=postgres
-      - KONG_PG_HOST=192.168.99.4
+      - KONG_PG_HOST=kong-database #192.168.99.4
       - KONG_PG_PASSWORD=gonk
-      - KONG_CASSANDRA_CONTACT_POINTS=192.168.99.4
+      - KONG_CASSANDRA_CONTACT_POINTS=kong-database #192.168.99.4
       - KONG_PROXY_ACCESS_LOG=/dev/stdout
       - KONG_ADMIN_ACCESS_LOG=/dev/stdout
       - KONG_PROXY_ERROR_LOG=/dev/stderr
       - KONG_ADMIN_ERROR_LOG=/dev/stderr
       - KONG_ADMIN_LISTEN=0.0.0.0:8001
       - KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444
-      - KONG_DNS_RESOLVER=192.168.99.2:8600   #注意按需使用，consul的才配
+      # - KONG_DNS_RESOLVER=192.168.99.2:8600   #注意按需使用，consul的才配
     ports:
       - 8000:8000
       - 8443:8443
@@ -102,13 +106,14 @@ services:
       - ./kong-config:/etc/kong
     networks:
        kong-konga-network:
-         ipv4_address: 192.168.99.6
+          ipv4_address: 192.168.99.6
 
     command: ["./wait-for-stop.sh", "-h", "kong-database-migrations", "--", "kong", "start"]
    
   konga:
     build: ./konga
     container_name: konga
+    user: root
     depends_on:
       - konga-database
       - kong
@@ -127,7 +132,7 @@ services:
       - KONGA_SEED_USER_DATA_SOURCE_FILE=/app/user_seed.js
     networks:
        kong-konga-network:
-         ipv4_address: 192.168.99.7
+          ipv4_address: 192.168.99.7
 
     #command: ["./wait-for-migrations-kong-and-start.sh"] #关闭@sunny5156
 
@@ -136,6 +141,7 @@ networks:
       ipam: 
         driver: default
         config:
-          - subnet: "192.168.99.0/24"
+          - subnet: 192.168.99.0/24
+          # - gateway: 192.168.99.1
 
 
