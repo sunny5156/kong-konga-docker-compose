@@ -66,10 +66,10 @@ services:
       - kong-database
     environment: 
       - KONG_DATABASE=postgres
-      - KONG_PG_HOST=kong-database  #192.168.99.4
+      - KONG_PG_HOST=192.168.99.4
       - KONG_PG_USER=kong
       - KONG_PG_PASSWORD=gonk
-      - KONG_CASSANDRA_CONTACT_POINTS=kong-database #192.168.99.4
+      - KONG_CASSANDRA_CONTACT_POINTS=192.168.99.4
     networks:
        kong-konga-network:
           ipv4_address: 192.168.99.5
@@ -87,9 +87,9 @@ services:
       # - consul
     environment:
       - KONG_DATABASE=postgres
-      - KONG_PG_HOST=kong-database #192.168.99.4
+      - KONG_PG_HOST=192.168.99.4
       - KONG_PG_PASSWORD=gonk
-      - KONG_CASSANDRA_CONTACT_POINTS=kong-database #192.168.99.4
+      - KONG_CASSANDRA_CONTACT_POINTS=192.168.99.4
       - KONG_PROXY_ACCESS_LOG=/dev/stdout
       - KONG_ADMIN_ACCESS_LOG=/dev/stdout
       - KONG_PROXY_ERROR_LOG=/dev/stderr
