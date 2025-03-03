@@ -6,7 +6,7 @@ from typing import Dict, List
 # 配置旧版和新版Kong Admin API地址
 
 OLD_KONG_ADMIN = "http://10.100.3.251:8001"
-NEW_KONG_ADMIN = "http://10.100.0.239:8001"
+NEW_KONG_ADMIN = "http://10.100.1.239:8011"
 
 # 禁用SSL验证（如果有HTTPS且证书不受信任）
 SESSION = requests.Session()
@@ -81,7 +81,7 @@ def migrate_routes(old_routes: List[Dict], service_id_mapping: Dict[str, str]) -
             "paths": route.get("paths", []),
             "methods": route.get("methods"),
             "service": {"id": service_id_mapping[route["service"]["id"]]},
-            "path_handling": "v1"  # 根据Kong 3.x的配置调整
+            "path_handling": "v1",  # 根据Kong 3.x的配置调整
             "created_at": route["created_at"],
         }
         # 移除旧版本无效字段
