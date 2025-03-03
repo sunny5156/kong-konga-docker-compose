@@ -10,8 +10,8 @@ Used the wonderful wait-for-it.sh script (https://github.com/vishnubob/wait-for-
 
 ```
 
-kong: 2.7.1
-cassandra: 3.2
+kong: 3.9
+postgre: 12.16
 konga: 0.14.9
 mongo: 4.0
 
