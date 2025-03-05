@@ -5,8 +5,9 @@ from typing import Dict, List
 
 # 配置旧版和新版Kong Admin API地址
 
-OLD_KONG_ADMIN = "http://10.100.3.251:8001"
-NEW_KONG_ADMIN = "http://10.100.1.239:8011"
+# OLD_KONG_ADMIN = "http://10.100.0.239:8839"
+# NEW_KONG_ADMIN = "http://10.100.1.239:8011"
+
 
 # 禁用SSL验证（如果有HTTPS且证书不受信任）
 SESSION = requests.Session()
@@ -48,6 +49,8 @@ def migrate_services(old_services: List[Dict]) -> Dict[str, str]:
             "port": service.get("port", 80),
             # 其他字段按需添加
             "created_at": service["created_at"],
+            "tags": service["tags"],
+            
         }
 
         # 如果存在url字段则覆盖
@@ -83,6 +86,11 @@ def migrate_routes(old_routes: List[Dict], service_id_mapping: Dict[str, str]) -
             "service": {"id": service_id_mapping[route["service"]["id"]]},
             "path_handling": "v1",  # 根据Kong 3.x的配置调整
             "created_at": route["created_at"],
+            "tags": route["tags"],
+            "hosts": route["hosts"],
+            "protocols": route["protocols"],
+            "headers": route["headers"],
+
         }
         # 移除旧版本无效字段
         new_route.pop("strip_path", None)
@@ -126,7 +134,8 @@ def migrate_plugins(old_plugins: List[Dict], service_id_map: Dict, route_id_map:
                 "service": {"id": new_service_id},
                 "config": config,
                 "enabled": True,  # Kong 3.x可能需要显式启用
-                "created_at": plugin["created_at"]
+                "created_at": plugin["created_at"],
+                "tags": plugin["tags"],
             }
         # elif plugin.get("route_id"):
         elif old_plugin_route_id is not None:
@@ -139,7 +148,8 @@ def migrate_plugins(old_plugins: List[Dict], service_id_map: Dict, route_id_map:
                 "route": {"id": new_route_id},
                 "config": config,
                 "enabled": True,
-                "created_at": plugin["created_at"]
+                "created_at": plugin["created_at"],
+                "tags": plugin["tags"],
             }
         else:
             print("插件未关联Service或Route，跳过")
@@ -155,7 +165,101 @@ def migrate_plugins(old_plugins: List[Dict], service_id_map: Dict, route_id_map:
         else:
             resp.raise_for_status()
 
+def migrate_upstreams(old_upstreams: List[Dict]) -> Dict[str, str]:
+    """迁移Upstreams并返回ID映射"""
+    id_mapping = {}
+    for upstream in old_upstreams:
+        # 检查是否已存在
+        check_resp = SESSION.get(
+            f"{NEW_KONG_ADMIN}/upstreams/{upstream['name']}",
+            params={"name": upstream["name"]}
+        )
+        if check_resp.status_code == 200:
+            print(f"Upstream {upstream['name']} 已存在，跳过创建")
+            id_mapping[upstream["id"]] = check_resp.json()["id"]
+            continue
+
+        # 构建新的Upstream配置
+        new_upstream = {
+            "name": upstream["name"],
+            "algorithm": upstream.get("algorithm", "round-robin"),
+            "hash_on": upstream.get("hash_on", "none"),
+            "hash_fallback": upstream.get("hash_fallback", "none"),
+            "healthchecks": upstream.get("healthchecks", {}),
+            "slots": upstream.get("slots", 10000),
+            "created_at": upstream["created_at"],
+            "tags": upstream["tags"],
+        }
+        
+        try:
+            resp = SESSION.post(f"{NEW_KONG_ADMIN}/upstreams", json=new_upstream)
+            if resp.status_code == 409:
+                existing = SESSION.get(f"{NEW_KONG_ADMIN}/upstreams/{upstream['name']}").json()
+                id_mapping[upstream["id"]] = existing["id"]
+                print(f"Upstream {upstream['name']} 冲突，使用现有实例")
+                continue
+            resp.raise_for_status()
+            id_mapping[upstream["id"]] = resp.json()["id"]
+        except Exception as e:
+            print(f"创建Upstream {upstream['name']} 失败: {str(e)}")
+            continue
+    
+    return id_mapping
+
+def migrate_targets(old_upstreams: List[Dict], upstream_id_mapping: Dict[str, str]):
+    """迁移Targets"""
+    for upstream in old_upstreams:
+        new_upstream_id = upstream_id_mapping.get(upstream["id"])
+        if not new_upstream_id:
+            continue
+        
+        # 获取旧Targets
+        targets = fetch_all_entities(
+            OLD_KONG_ADMIN,
+            f"upstreams/{upstream['id']}/targets"
+        )
+        
+        for target in targets:
+            # 检查是否已存在
+            # check_resp = SESSION.get(
+            #     f"{NEW_KONG_ADMIN}/upstreams/{new_upstream_id}/targets",
+            #     params={"target": target["target"]}
+            # )
+            # if check_resp.status_code == 200 and len(check_resp.json()["data"]) > 0:
+            #     print(f"Target {target['target']} 已存在，跳过")
+            #     continue
+
+            # 创建新Target
+            new_target = {
+                "target": target["target"],
+                "weight": target.get("weight", 100),
+                "tags": target.get("tags", []),
+                "created_at": target["created_at"],
+            }
+            
+            try:
+                resp = SESSION.post(
+                    f"{NEW_KONG_ADMIN}/upstreams/{new_upstream_id}/targets",
+                    json=new_target
+                )
+                if resp.status_code == 409:
+                    print(f"Target {target['target']} 冲突，可能已存在")
+                    continue
+                resp.raise_for_status()
+            except Exception as e:
+                print(f"创建Target {target['target']} 失败: {str(e)}")
+
 def main():
+    # 新增Upstream迁移流程
+    print("导出Upstreams...")
+    old_upstreams = fetch_all_entities(OLD_KONG_ADMIN, "upstreams")
+    
+    print("迁移Upstreams...")
+    upstream_id_mapping = migrate_upstreams(old_upstreams)
+    
+    print("迁移Targets...")
+    migrate_targets(old_upstreams, upstream_id_mapping)
+
     # 导出旧数据
     print("导出Services...")
     old_services = fetch_all_entities(OLD_KONG_ADMIN, "services")
